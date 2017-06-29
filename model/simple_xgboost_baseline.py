@@ -107,7 +107,7 @@ def main():
     print 'predict submit...'
     y_pred = model.predict(dtest)
     df_sub = pd.DataFrame({'ID': id_test, 'y': y_pred})
-    df_sub.to_csv(Configure.submission_path, index=False)  # 0.31499
+    df_sub.to_csv(Configure.submission_path, index=False)
 
 
 if __name__ == '__main__':
