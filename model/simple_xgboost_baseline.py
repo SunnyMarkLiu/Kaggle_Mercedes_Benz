@@ -37,12 +37,8 @@ def main():
 
     for c in str_columns:
         lbl = preprocessing.LabelEncoder()
-        lbl.fit(list(train[c].values))
+        lbl.fit(list(train[c].values) + list(test[c].values))
         train[c] = lbl.transform(list(train[c].values))
-
-    for c in str_columns:
-        lbl = preprocessing.LabelEncoder()
-        lbl.fit(list(test[c].values))
         test[c] = lbl.transform(list(test[c].values))
 
     y_train_all = train['y']
