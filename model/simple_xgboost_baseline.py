@@ -21,7 +21,7 @@ import xgboost as xgb
 
 # my own module
 from conf.configure import Configure
-
+from utils import data_util
 
 def xgb_r2_score(preds, dtrain):
     labels = dtrain.get_label()
@@ -30,25 +30,13 @@ def xgb_r2_score(preds, dtrain):
 
 def main():
     print 'load datas...'
-    train = pd.read_csv(Configure.original_train_path)
-    test = pd.read_csv(Configure.original_test_path)
-
-    str_columns = train.select_dtypes(include=['object']).columns
-
-    for c in str_columns:
-        lbl = preprocessing.LabelEncoder()
-        lbl.fit(list(train[c].values) + list(test[c].values))
-        train[c] = lbl.transform(list(train[c].values))
-        test[c] = lbl.transform(list(test[c].values))
+    train, test = data_util.load_dataset()
 
     y_train_all = train['y']
     del train['ID']
     del train['y']
     id_test = test['ID']
     del test['ID']
-
-    test_size = (1.0 * test.shape[0]) / train.shape[0]
-    print "submit test size:", test_size
 
     # Convert to numpy values
     X_all = train.values

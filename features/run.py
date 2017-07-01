@@ -13,8 +13,8 @@ import sys
 module_path = os.path.abspath(os.path.join('..'))
 sys.path.append(module_path)
 
-cmd = 'rm ../input/processed_*.pkl'
+cmd = 'rm ../input/*_dataset.pkl'
 os.system(cmd)
 
-cmd = 'python generate_decomposition_features.py'
+cmd = 'python perform_category_features.py'
 os.system(cmd)
