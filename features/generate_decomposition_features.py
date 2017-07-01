@@ -12,9 +12,10 @@ module_path = os.path.abspath(os.path.join('..'))
 sys.path.append(module_path)
 
 import pandas as pd
-from sklearn.decomposition import PCA
+from sklearn.decomposition import PCA, IncrementalPCA
 # remove warnings
 import warnings
+
 warnings.filterwarnings('ignore')
 
 # my own module
@@ -36,9 +37,14 @@ def main():
     n_comp = 50
     pca = PCA(n_components=n_comp, random_state=100)
     pca_df = pca.fit_transform(conbined_data)
-
     for i in range(0, n_comp):
         conbined_data['pca_' + str(i)] = pca_df[:, i]
+
+    # IncrementalPCA
+    n_comp = 60
+    ipca_df = IncrementalPCA(n_components=n_comp, batch_size=conbined_data.shape[0]).fit_transform(conbined_data)
+    for i in range(0, n_comp):
+        conbined_data['ipca_' + str(i)] = ipca_df[:, i]
 
     conbined_data['ID'] = ids
     train = conbined_data.iloc[:train.shape[0], :]
