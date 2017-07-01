@@ -12,6 +12,8 @@ module_path = os.path.abspath(os.path.join('..'))
 sys.path.append(module_path)
 
 import pandas as pd
+from sklearn.decomposition import PCA, FastICA
+
 from conf.configure import Configure
 
 

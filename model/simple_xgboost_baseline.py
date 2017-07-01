@@ -14,14 +14,13 @@ sys.path.append(module_path)
 
 import numpy as np
 import pandas as pd
-from sklearn import preprocessing
 from sklearn.metrics import r2_score
-from sklearn.metrics import mean_squared_error
 import xgboost as xgb
 
 # my own module
 from conf.configure import Configure
 from utils import data_util
+
 
 def xgb_r2_score(preds, dtrain):
     labels = dtrain.get_label()
@@ -63,30 +62,36 @@ def main():
     dval = xgb.DMatrix(X_val, y_val, feature_names=df_columns)
     dtest = xgb.DMatrix(X_test, feature_names=df_columns)
 
+    y_mean = np.mean(y_train)
     xgb_params = {
-        'eta': 0.01,
-        'max_depth': 5,
-        'subsample': 0.7,
-        'colsample_bytree': 0.7,
+        'n_trees': 500,
+        'eta': 0.005,
+        'max_depth': 4,
+        'subsample': 0.95,
         'objective': 'reg:linear',
         'eval_metric': 'rmse',
+        'base_score': y_mean,  # base prediction = mean(target)
         'silent': 1
     }
 
-    num_round = 1000
-    xgb_params['nthread'] = 24
-    evallist = [(dval, 'eval')]
+    # xgboost, cross-validation
+    cv_result = xgb.cv(xgb_params,
+                       dtrain,
+                       num_boost_round=500,  # increase to have better results (~700)
+                       early_stopping_rounds=50,
+                       verbose_eval=50,
+                       show_stdv=False
+                       )
 
-    bst = xgb.train(xgb_params, dtrain, num_round, evallist, early_stopping_rounds=10,
-                    verbose_eval=10)
+    num_boost_rounds = len(cv_result)
+    print 'num_boost_rounds =', num_boost_rounds
+    model = xgb.train(xgb_params, dtrain, num_boost_round=num_boost_rounds)
+    train_r2_score = r2_score(dtrain.get_label(), model.predict(dtrain))
+    val_r2_score = r2_score(dval.get_label(), model.predict(dval))
+    print 'train r2 score =', train_r2_score, ', validate r2 score =', val_r2_score
 
-    train_rmse = mean_squared_error(y_train, bst.predict(dtrain))
-    val_rmse = mean_squared_error(y_val, bst.predict(dval))
-    print 'train_rmse =', np.sqrt(train_rmse), ', val_rmse =', np.sqrt(val_rmse)
-
-    num_boost_round = bst.best_iteration
-    print 'best_iteration: ', num_boost_round
-    model = xgb.train(dict(xgb_params, silent=1), dtrain_all, num_boost_round=num_boost_round)
+    # train model
+    model = xgb.train(dict(xgb_params, base_score=np.mean(y_train_all)), dtrain_all, num_boost_round=num_boost_rounds)
 
     print 'predict submit...'
     y_pred = model.predict(dtest)

@@ -38,17 +38,17 @@ def main():
         lbl.fit(list(conbined_data[c].values))
         label_encoder_df['label_encoder_' + c] = lbl.transform(list(conbined_data[c].values))
 
-    print 'perform dummy encoder...'
-    dummy_encoder_df = pd.DataFrame({'ID': ids})
-    for c in str_columns:
-        dummies_df = pd.get_dummies(conbined_data[c], prefix=c)
-        dummy_encoder_df = pd.concat([dummy_encoder_df, dummies_df], axis=1)
+    # print 'perform dummy encoder...'
+    # dummy_encoder_df = pd.DataFrame({'ID': ids})
+    # for c in str_columns:
+    #     dummies_df = pd.get_dummies(conbined_data[c], prefix=c)
+    #     dummy_encoder_df = pd.concat([dummy_encoder_df, dummies_df], axis=1)
 
     # 合并数据
     del label_encoder_df['ID']
     conbined_data = pd.concat([conbined_data, label_encoder_df], axis=1)
-    del dummy_encoder_df['ID']
-    conbined_data = pd.concat([conbined_data, dummy_encoder_df], axis=1)
+    # del dummy_encoder_df['ID']
+    # conbined_data = pd.concat([conbined_data, dummy_encoder_df], axis=1)
 
     # 去除原有的 category features
     conbined_data.drop(str_columns, axis=1, inplace=True)
