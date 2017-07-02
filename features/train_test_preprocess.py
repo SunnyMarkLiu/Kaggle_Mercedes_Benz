@@ -11,8 +11,6 @@ import sys
 module_path = os.path.abspath(os.path.join('..'))
 sys.path.append(module_path)
 
-import pandas as pd
-from sklearn import preprocessing
 from utils import data_util
 
 
@@ -29,6 +27,8 @@ def main():
     train.drop(removed_features, axis=1, inplace=True)
     test.drop(removed_features, axis=1, inplace=True)
 
+    # 去除 train 中的 outlier 数据
+    train = train[train.y < 200]
     print 'train:', train.shape, ', test:', test.shape
     print("Save data...")
     data_util.save_dataset(train, test)
