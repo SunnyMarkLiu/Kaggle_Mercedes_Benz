@@ -49,7 +49,6 @@ def main():
     dtest = xgb.DMatrix(X_test, feature_names=df_columns)
 
     xgb_params = {
-        'n_trees': 500,
         'eta': 0.005,
         'max_depth': 4,
         'subsample': 0.95,
@@ -69,7 +68,7 @@ def main():
 
         cv_result = xgb.cv(dict(xgb_params, base_score=y_mean),  # base prediction = mean(target)
                            dtrain,
-                           num_boost_round=500,  # increase to have better results (~700)
+                           num_boost_round=1000,  # increase to have better results (~700)
                            early_stopping_rounds=50,
                            )
 
