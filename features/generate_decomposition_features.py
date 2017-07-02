@@ -12,7 +12,7 @@ module_path = os.path.abspath(os.path.join('..'))
 sys.path.append(module_path)
 
 import pandas as pd
-from sklearn.decomposition import PCA, IncrementalPCA
+from sklearn.decomposition import PCA, IncrementalPCA, KernelPCA
 # remove warnings
 import warnings
 
@@ -45,6 +45,12 @@ def main():
     ipca_df = IncrementalPCA(n_components=n_comp, batch_size=conbined_data.shape[0]).fit_transform(conbined_data)
     for i in range(0, n_comp):
         conbined_data['ipca_' + str(i)] = ipca_df[:, i]
+
+    # KernelPCA
+    n_comp = 60
+    ipca_df = KernelPCA(n_components=n_comp, kernel='linear').fit_transform(conbined_data)
+    for i in range(0, n_comp):
+        conbined_data['kernel_pca_' + str(i)] = ipca_df[:, i]
 
     conbined_data['ID'] = ids
     train = conbined_data.iloc[:train.shape[0], :]
