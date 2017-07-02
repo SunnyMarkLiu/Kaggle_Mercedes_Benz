@@ -33,9 +33,12 @@ def main():
     ids = conbined_data['ID']
     conbined_data.drop(['ID'], axis=1, inplace=True)
 
+    random_state = 100
+    n_jobs = -1
+
     # PCA
     n_comp = 50
-    pca = PCA(n_components=n_comp, random_state=100)
+    pca = PCA(n_components=n_comp, random_state=random_state)
     pca_df = pca.fit_transform(conbined_data)
     for i in range(0, n_comp):
         conbined_data['pca_' + str(i)] = pca_df[:, i]
@@ -48,7 +51,7 @@ def main():
 
     # KernelPCA
     n_comp = 60
-    ipca_df = KernelPCA(n_components=n_comp, kernel='linear').fit_transform(conbined_data)
+    ipca_df = KernelPCA(n_components=n_comp, kernel='linear', random_state=random_state, n_jobs=n_jobs).fit_transform(conbined_data)
     for i in range(0, n_comp):
         conbined_data['kernel_pca_' + str(i)] = ipca_df[:, i]
 
