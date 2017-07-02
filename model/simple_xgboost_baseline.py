@@ -15,6 +15,7 @@ sys.path.append(module_path)
 import numpy as np
 import pandas as pd
 from sklearn.metrics import r2_score
+from sklearn.model_selection import train_test_split
 import xgboost as xgb
 
 # my own module
@@ -37,32 +38,16 @@ def main():
     id_test = test['ID']
     del test['ID']
 
-    # Convert to numpy values
-    X_all = train.values
-    # Create a validation set, with last 20% of data
-    num_train = int(train.shape[0] * 0.8)
-    X_train_all = X_all
-    X_train = X_all[:num_train]
-    X_val = X_all[num_train:]
-    y_train = y_train_all[:num_train]
-    y_val = y_train_all[num_train:]
+    print 'train:', train.shape, ', test:', test.shape
+
+    train_r2_scores = []
+    val_r2_scores = []
+    num_boost_roundses = []
+
     X_test = test
-    print "validate size:", 1.0 * X_val.shape[0] / X_train.shape[0]
-
-    print('X_train_all shape is', X_train_all.shape)
-    print('X_train shape is', X_train.shape)
-    print('y_train shape is', y_train.shape)
-    print('X_val shape is', X_val.shape)
-    print('y_val shape is', y_val.shape)
-    print('X_test shape is', X_test.shape)
-
     df_columns = train.columns.values
-    dtrain_all = xgb.DMatrix(X_train_all, y_train_all, feature_names=df_columns)
-    dtrain = xgb.DMatrix(X_train, y_train, feature_names=df_columns)
-    dval = xgb.DMatrix(X_val, y_val, feature_names=df_columns)
     dtest = xgb.DMatrix(X_test, feature_names=df_columns)
 
-    y_mean = np.mean(y_train)
     xgb_params = {
         'n_trees': 500,
         'eta': 0.005,
@@ -70,28 +55,45 @@ def main():
         'subsample': 0.95,
         'objective': 'reg:linear',
         'eval_metric': 'rmse',
-        'base_score': y_mean,  # base prediction = mean(target)
         'silent': 1
     }
 
-    # xgboost, cross-validation
-    cv_result = xgb.cv(xgb_params,
-                       dtrain,
-                       num_boost_round=500,  # increase to have better results (~700)
-                       early_stopping_rounds=50,
-                       verbose_eval=50,
-                       show_stdv=False
-                       )
+    for i in range(0, 5):
+        random_state = 42 + i
+        X_train, X_val, y_train, y_val = train_test_split(train, y_train_all, test_size=0.2, random_state=random_state)
 
-    num_boost_rounds = len(cv_result)
-    print 'num_boost_rounds =', num_boost_rounds
-    model = xgb.train(xgb_params, dtrain, num_boost_round=num_boost_rounds)
-    train_r2_score = r2_score(dtrain.get_label(), model.predict(dtrain))
-    val_r2_score = r2_score(dval.get_label(), model.predict(dval))
-    print 'train r2 score =', train_r2_score, ', validate r2 score =', val_r2_score
+        dtrain = xgb.DMatrix(X_train, y_train, feature_names=df_columns)
+        dval = xgb.DMatrix(X_val, y_val, feature_names=df_columns)
 
+        y_mean = np.mean(y_train)
+
+        cv_result = xgb.cv(dict(xgb_params, base_score=y_mean),  # base prediction = mean(target)
+                           dtrain,
+                           num_boost_round=500,  # increase to have better results (~700)
+                           early_stopping_rounds=50,
+                           )
+
+        num_boost_rounds = len(cv_result)
+        num_boost_roundses.append(num_boost_rounds)
+        model = xgb.train(dict(xgb_params, base_score=y_mean), dtrain, num_boost_round=num_boost_rounds)
+        train_r2_score = r2_score(dtrain.get_label(), model.predict(dtrain))
+        val_r2_score = r2_score(dval.get_label(), model.predict(dval))
+        print 'perform {} cross-validate: train r2 score = {}, validate r2 score = {}'.format(i + 1, train_r2_score,
+                                                                                              val_r2_score)
+        train_r2_scores.append(train_r2_score)
+        val_r2_scores.append(val_r2_score)
+
+    print '\naverage train r2 score = {}, average validate r2 score = {}'.format(
+        sum(train_r2_scores) / len(train_r2_scores),
+        sum(val_r2_scores) / len(val_r2_scores))
+
+    best_num_boost_rounds = sum(num_boost_roundses) // len(num_boost_roundses)
+    print 'best_num_boost_rounds =', best_num_boost_rounds
     # train model
-    model = xgb.train(dict(xgb_params, base_score=np.mean(y_train_all)), dtrain_all, num_boost_round=num_boost_rounds)
+    print 'training on total training data...'
+    dtrain_all = xgb.DMatrix(train, y_train_all, feature_names=df_columns)
+    model = xgb.train(dict(xgb_params, base_score=np.mean(y_train_all)), dtrain_all,
+                      num_boost_round=best_num_boost_rounds)
 
     print 'predict submit...'
     y_pred = model.predict(dtest)
