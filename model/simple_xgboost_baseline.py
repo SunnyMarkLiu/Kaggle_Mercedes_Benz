@@ -60,7 +60,7 @@ def main():
 
     for i in range(0, 5):
         random_state = 42 + i
-        X_train, X_val, y_train, y_val = train_test_split(train, y_train_all, test_size=0.2, random_state=random_state)
+        X_train, X_val, y_train, y_val = train_test_split(train, y_train_all, test_size=0.25, random_state=random_state)
 
         dtrain = xgb.DMatrix(X_train, y_train, feature_names=df_columns)
         dval = xgb.DMatrix(X_val, y_val, feature_names=df_columns)

@@ -41,7 +41,7 @@ def main():
         conbined_data['pca_' + str(i)] = pca_df[:, i]
 
     # IncrementalPCA
-    n_comp = 60
+    n_comp = 70
     ipca_df = IncrementalPCA(n_components=n_comp, batch_size=conbined_data.shape[0]).fit_transform(conbined_data)
     for i in range(0, n_comp):
         conbined_data['ipca_' + str(i)] = ipca_df[:, i]
