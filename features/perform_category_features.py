@@ -30,7 +30,7 @@ def main():
     conbined_data = pd.concat([train, test])
     ids = conbined_data['ID']
 
-    str_columns = train.select_dtypes(include=['object']).columns
+    str_columns = conbined_data.select_dtypes(include=['object']).columns
 
     label_encoder_df = pd.DataFrame({'ID': ids})
     print 'perform label encoder...'
