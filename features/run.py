@@ -30,3 +30,6 @@ os.system(cmd)
 
 cmd = 'python generate_groupby_features.py'
 os.system(cmd)
+
+cmd = 'python perform_feature_discretize.py'
+os.system(cmd)
