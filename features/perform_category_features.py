@@ -24,25 +24,13 @@ def main():
     print 'load datas...'
     train, test = data_util.load_dataset()
 
-    print 'numerical encoder...'
-    str_columns = train.select_dtypes(include=['object']).columns
-    for c in str_columns:
-        df2 = pd.DataFrame({col: vals['y'] for col, vals in train.groupby(c)})
-        sorded_df = df2.median().sort_values(ascending=True)
-        c_mean = sorded_df[c].mean()
-
-        feature_map = {k: v + 1 for v, k in enumerate(sorded_df.index.values)}
-        train['numerical_' + c] = train[c].map(feature_map)
-        test['numerical_' + c] = test[c].map(feature_map)
-        if c not in feature_map.keys():
-            train['numerical_' + c] = c_mean
-            test['numerical_' + c] = c_mean
-
     train_y = train['y']
     train.drop(['y'], axis=1, inplace=True)
     # 合并训练集和测试集
     conbined_data = pd.concat([train, test])
     ids = conbined_data['ID']
+
+    str_columns = train.select_dtypes(include=['object']).columns
 
     label_encoder_df = pd.DataFrame({'ID': ids})
     print 'perform label encoder...'

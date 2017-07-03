@@ -22,8 +22,8 @@ os.system(cmd)
 cmd = 'python perform_category_features.py'
 os.system(cmd)
 
-cmd = 'python impute_missing_data.py'
-os.system(cmd)
+# cmd = 'python impute_missing_data.py'
+# os.system(cmd)
 
 cmd = 'python generate_decomposition_features.py'
 os.system(cmd)
