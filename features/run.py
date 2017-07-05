@@ -33,3 +33,6 @@ os.system(cmd)
 
 cmd = 'python perform_feature_discretize.py'
 os.system(cmd)
+
+cmd = 'python generate_feature_distance.py'
+os.system(cmd)
