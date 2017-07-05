@@ -10,10 +10,11 @@ import sys
 
 module_path = os.path.abspath(os.path.join('..'))
 sys.path.append(module_path)
-
+import pandas as pd
 from tpot import TPOTRegressor
 from sklearn.model_selection import train_test_split
 from utils import data_util
+from conf.configure import Configure
 
 print 'load datas...'
 train, test = data_util.load_dataset()
@@ -38,3 +39,6 @@ pipeline_optimizer = TPOTRegressor(generations=5, population_size=100,
 pipeline_optimizer.fit(X_train.values, y_train.values)
 print(pipeline_optimizer.score(X_val.values, y_val.values))
 pipeline_optimizer.export('./tpot_exported_models/tpot_exported_pipeline.py')
+predict_y = pipeline_optimizer.predict(test.values)
+df_sub = pd.DataFrame({'ID': id_test, 'y': predict_y})
+df_sub.to_csv('tpot_pipeline_result.csv', index=False)
