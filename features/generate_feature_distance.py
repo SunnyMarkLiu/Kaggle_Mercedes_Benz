@@ -30,75 +30,80 @@ def main():
     print 'train:', train.shape, ', test:', test.shape
 
     train_y = train['y']
-    if (not os.path.exists(Configure.kmeans_feature_distance_train_path)) or \
-            (not os.path.exists(Configure.kmeans_feature_distance_test_path)):
-        train.drop(['y'], axis=1, inplace=True)
-        # 合并训练集和测试集
-        conbined_data = pd.concat([train, test])
-        ids = conbined_data['ID']
-        results_df = pd.DataFrame({'ID': ids})
+    train.drop(['y'], axis=1, inplace=True)
+    # 合并训练集和测试集
+    conbined_data = pd.concat([train, test])
+    ids = conbined_data['ID']
+    results_df = pd.DataFrame({'ID': ids})
 
-        n_clusters = 4
-        cls = KMeans(n_clusters=n_clusters, n_jobs=-1)
-        kmeans_labels = cls.fit_predict(conbined_data.values)
-        conbined_data['cluster_label'] = kmeans_labels
-        results_df['cluster_label'] = kmeans_labels
+    perform_clusters = [4, 6, 8, 10]
+    for n_clusters in perform_clusters:
+        print '>>>> perform kmeans cluser, n_clusters = {}...'.format(n_clusters)
+        feature_train_path = Configure.kmeans_feature_distance_train_path.format(n_clusters)
+        feature_test_path = Configure.kmeans_feature_distance_test_path.format(n_clusters)
 
-        # 计算距离
-        cluster_centers = cls.cluster_centers_
+        if (not os.path.exists(feature_train_path)) or \
+                (not os.path.exists(feature_test_path)):
+            cls = KMeans(n_clusters=n_clusters, n_jobs=-1)
+            kmeans_labels = cls.fit_predict(conbined_data.values)
+            conbined_data['cluster_label'] = kmeans_labels
+            results_df['cluster_label'] = kmeans_labels
 
-        def calc_intra_center_distance(data):
-            center = cluster_centers[int(data['cluster_label']), :]
-            raw_data = data.drop(['cluster_label'])
-            return np.linalg.norm(center - raw_data)
+            # 计算距离
+            cluster_centers = cls.cluster_centers_
 
-        def calc_extra_center_distance(data):
-            ci = range(0, n_clusters)
-            ci.remove(int(data['cluster_label']))
+            def calc_intra_center_distance(data):
+                center = cluster_centers[int(data['cluster_label']), :]
+                raw_data = data.drop(['cluster_label'])
+                return np.linalg.norm(center - raw_data)
 
-            distance = 0.0
-            raw_data = data.drop(['cluster_label'])
-            for i in ci:
-                center = cluster_centers[i, :]
-                dis = np.linalg.norm(center - raw_data)
-                distance += dis
-            return distance
+            def calc_extra_center_distance(data):
+                ci = range(0, n_clusters)
+                ci.remove(int(data['cluster_label']))
 
-        def calc_extra_center_distance2(data):
-            ci = range(0, n_clusters)
-            ci.remove(int(data['cluster_label']))
+                distance = 0.0
+                raw_data = data.drop(['cluster_label'])
+                for i in ci:
+                    center = cluster_centers[i, :]
+                    dis = np.linalg.norm(center - raw_data)
+                    distance += dis
+                return distance
 
-            distance = 0.0
-            raw_data = data.drop(['cluster_label'])
-            for i in ci:
-                center = cluster_centers[i, :]
-                dis = np.linalg.norm(center - raw_data)
-                distance += dis
-            return distance / len(ci)
+            def calc_extra_center_distance2(data):
+                ci = range(0, n_clusters)
+                ci.remove(int(data['cluster_label']))
 
-        print 'calc intra center distance...'
-        results_df['intra_center_distance'] = conbined_data.apply(calc_intra_center_distance, axis=1, raw=True)
-        print 'calc average extra center distance...'
-        results_df['average_extra_center_distance'] = conbined_data.apply(calc_extra_center_distance, axis=1, raw=True)
-        print 'calc sum extra center distance...'
-        results_df['sum_extra_center_distance'] = conbined_data.apply(calc_extra_center_distance2, axis=1, raw=True)
+                distance = 0.0
+                raw_data = data.drop(['cluster_label'])
+                for i in ci:
+                    center = cluster_centers[i, :]
+                    dis = np.linalg.norm(center - raw_data)
+                    distance += dis
+                return distance / len(ci)
 
-        center_distance_train = results_df.iloc[:train.shape[0], :]
-        center_distance_test = results_df.iloc[train.shape[0]:, :]
+            results_df['intra_center_distance_cluster_{}'.format(n_clusters)] = \
+                                            conbined_data.apply(calc_intra_center_distance, axis=1, raw=True)
+            results_df['average_extra_center_distance_cluster_{}'.format(n_clusters)] = \
+                                            conbined_data.apply(calc_extra_center_distance, axis=1, raw=True)
+            results_df['sum_extra_center_distance_cluster_{}'.format(n_clusters)] = \
+                                            conbined_data.apply(calc_extra_center_distance2, axis=1, raw=True)
 
-        with open(Configure.kmeans_feature_distance_train_path, "wb") as f:
-            cPickle.dump(center_distance_train, f, -1)
-        with open(Configure.kmeans_feature_distance_test_path, "wb") as f:
-            cPickle.dump(center_distance_test, f, -1)
-    else:
-        with open(Configure.kmeans_feature_distance_train_path, "rb") as f:
-            center_distance_train = cPickle.load(f)
-        with open(Configure.kmeans_feature_distance_test_path, "rb") as f:
-            center_distance_test = cPickle.load(f)
+            center_distance_train = results_df.iloc[:train.shape[0], :]
+            center_distance_test = results_df.iloc[train.shape[0]:, :]
 
-    # merge
-    train = pd.merge(train, center_distance_train, how='left', on='ID')
-    test = pd.merge(test, center_distance_test, how='left', on='ID')
+            with open(feature_train_path, "wb") as f:
+                cPickle.dump(center_distance_train, f, -1)
+            with open(feature_test_path, "wb") as f:
+                cPickle.dump(center_distance_test, f, -1)
+        else:
+            with open(feature_train_path, "rb") as f:
+                center_distance_train = cPickle.load(f)
+            with open(feature_test_path, "rb") as f:
+                center_distance_test = cPickle.load(f)
+
+        # merge
+        train = pd.merge(train, center_distance_train, how='left', on='ID')
+        test = pd.merge(test, center_distance_test, how='left', on='ID')
 
     train['y'] = train_y.values
     print 'train:', train.shape, ', test:', test.shape
