@@ -39,3 +39,6 @@ os.system(cmd)
 
 cmd = 'python generate_groupby_features.py'
 os.system(cmd)
+
+cmd = 'python perform_other_features.py'
+os.system(cmd)
