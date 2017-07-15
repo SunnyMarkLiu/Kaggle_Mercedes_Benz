@@ -3,6 +3,7 @@ Kaggle Competition: [Mercedes-Benz Greener Manufacturing](https://www.kaggle.com
 
 ## Contents
 Public LB Score: 0.56966, 573/3835
+
 Private LB Score: 0.55162, 388/3835
 
 ## License
